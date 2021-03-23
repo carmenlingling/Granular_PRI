@@ -1,0 +1,13 @@
+-*- mode: compilation; default-directory: "~/Desktop/Research/Coarsening bubble clusters/Code/" -*-
+Compilation started at Sat Mar  6 15:52:19
+
+python3 plottingdata.py
+3 27
+Traceback (most recent call last):
+  File "plottingdata.py", line 119, in <module>
+    Nmar, rowmar, rgmar = plotthings(directorymar2, fileNamesmar2, offsetmar2both)
+  File "plottingdata.py", line 97, in plotthings
+    perimeter,normperim,  times = np.genfromtxt(directory+'/'+fileNames[m])
+ValueError: not enough values to unpack (expected 3, got 2)
+
+Compilation exited abnormally with code 1 at Sat Mar  6 15:52:22
