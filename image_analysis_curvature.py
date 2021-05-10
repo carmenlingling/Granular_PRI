@@ -9,10 +9,9 @@ import ImportImages as II
 import scipy as sc
 from skimage import feature, measure, filters
 from skimage.filters import roberts, sobel, scharr, prewitt
-from skimage.segmentation import active_contour
 import tkinter as tk
 from tkinter import filedialog
-import os 
+import os
 import time
 start_time = time.time()
 
@@ -22,7 +21,8 @@ pixtomic = 235/6.7
 '''root = tk.Tk()
 root.withdraw()
 root.update()
-file_path = filedialog.askopenfilename() #asks which file you want to analyze and records the filepath and name
+file_path = filedialog.askopenfilename() #asks which file you want to analyze /
+and records the filepath and name
 root.destroy()'''
 '''
 start = 23
@@ -58,9 +58,10 @@ def fit_spline(xdata, ydata, averaging_interval):
 
 def clean_data(data):
     for k in range(len(data)-1):
-        if abs(data[k,0]-data[k+1,0])>2 or abs(data[k,1]-data[k+1,1])>2:
+        if abs(data[k,0]-data[k+1,0])>=4 or abs(data[k,1]-data[k+1,1])>=4:
+            print(data[k], data[k+1])
             return(k+1)
-        
+    return(len(data))
 def curvature(xdata, ydata):
     difx = np.diff(xdata)
     dify = np.diff(ydata)
@@ -86,7 +87,7 @@ def R_g(xs, ys):
     return np.sqrt(R)
 
 #########################
-def image_analysis_curvature(imagepath, start, ymin, ymax, xmin, xmax, plot=False):
+def image_analysis_curvature(imagepath, start, stop, ymin, ymax, xmin, xmax, plot=False):
     perimeters = []
     normperims = []
     times = []
@@ -95,7 +96,11 @@ def image_analysis_curvature(imagepath, start, ymin, ymax, xmin, xmax, plot=Fals
     directory = os.path.split(imagepath)[0]
     prefix = os.path.split(imagepath)[1]
     frames = II.stack(directory, prefix, II.preprocess_sharpen)
-    for k in range(len(frames)-start):
+    if stop == None:
+        end = len(frames)-start
+    else:
+        end = stop
+    for k in range(end):
     #for k in range(200):
         ref = frames[k+start]
         #print(ref.shape)
@@ -106,7 +111,7 @@ def image_analysis_curvature(imagepath, start, ymin, ymax, xmin, xmax, plot=Fals
         mask = ref < val
         #edges1 = feature.canny(ref, sigma=2.7)edges1 = feature.canny(ref, sigma=2.7)
         from scipy import ndimage
-        full = ndimage.morphology.binary_dilation(ndimage.binary_fill_holes(mask)).astype(int)
+        full = ndimage.morphology.binary_dilation(ndimage.binary_fill_holes(mask), iterations=2).astype(int)
         #plt.imshow(full)
         edges = full - ndimage.morphology.binary_dilation(full)
         #print(full)
@@ -115,69 +120,90 @@ def image_analysis_curvature(imagepath, start, ymin, ymax, xmin, xmax, plot=Fals
         edgesloc = np.where(edges < 0)
         #print(edges)
         #plt.scatter(edgesloc[0],edgesloc[1], cmap = 'gray')
-    
+
         #ref_img = plt.imshow(ref, cmap = 'viridis', alpha = 0.5)
 
-    
+
         #plt.savefig(directory+'/filter/%i.png'%k)
 
         #plt.show()
-    
+
         edges = []
         for i in range(len(edgesloc[0])):
-            edges.append([edgesloc[0][i], edgesloc[1][i]])
-        ordered_edges = brute_dfs_it.get_brute_list(edges)
-    
-    
+            edges.append([edgesloc[1][i], edgesloc[0][i]])
+        midpoint = [np.average(edgesloc[1][:]), np.average(edgesloc[0][:])]
+        ordered_edges = brute_dfs_it.get_brute_list(edges, midpoint)
+
+
         ordered_edges = np.asarray(ordered_edges)
+        #print(len(ordered_edges))
         stop = len(ordered_edges)
         stop = clean_data(ordered_edges)
-        print(stop)
-        if k % 1 == 0:
-            
+        print(len(ordered_edges),stop)
+        if k % 500 == 0:
+            r = np.r_[np.linspace(0, 1, len(edgesloc[0]))]
             ra = np.r_[np.linspace(0, 1, stop)]
+            rw = np.r_[np.linspace(0, 1, len(ordered_edges))]
             c = plt.get_cmap("viridis")
             colors1 = c(ra)
-            plt.scatter(ordered_edges[0:stop,1], ordered_edges[0:stop,0], c=ra, cmap = 'viridis')
-            plt.imshow(edges, cmap = 'gray')
+            plt.plot(midpoint[0], midpoint[1], 's')
+            plt.plot(ordered_edges[0,0], ordered_edges[0,1], 's')
+            print(ordered_edges[0,:])
+            plt.scatter(edgesloc[1], edgesloc[0], c=r, cmap = 'Blues')
+            plt.scatter(ordered_edges[:,0], ordered_edges[:,1], c=rw, cmap = 'Greys', alpha=0.5)
+            plt.scatter(ordered_edges[0:stop,0], ordered_edges[0:stop,1], c=ra, cmap = 'viridis', marker = '*')
+            plt.colorbar()
+            #plt.xlim([0,1000])
+            #plt.ylim([0, 400])
+            #plt.imshow(edges, cmap = 'gray')
             plt.show()
-        rg.append(R_g(edgesloc[0], edgesloc[1])*pixtomic)
+        rg.append(R_g(ordered_edges[0:stop,0], ordered_edges[0:stop,1])*pixtomic)
         #splinedx, splinedy= fit_spline(ordered_edges[0:stop,0],ordered_edges[0:stop,1])
-        #curve = curvature(ordered_edges[0:stop,0],ordered_edges[0:stop,1])
-        #curvatures.append(curvature(ordered_edges[0:stop,0],ordered_edges[0:stop,1]))
-   
+        curve = curvature(ordered_edges[0:stop,0],ordered_edges[0:stop,1])
+        curvatures.append(curvature(ordered_edges[0:stop,0],ordered_edges[0:stop,1]))
+
         times.append(k)
-    
+
     if plot==True:
-        plt.imshow(edges1, cmap = 'gray')
-        ref_img = plt.imshow(ref, cmap = 'viridis', alpha = 0.5)
-        
-        plt.show()
+        #plt.imshow(edges1, cmap = 'gray')
+        #ref_img = plt.imshow(ref, cmap = 'viridis', alpha = 0.5)
+
+        #plt.show()
         ra = np.r_[np.linspace(0, 1, stop)]
         c = plt.get_cmap("viridis")
         colors1 = c(ra)
         plt.scatter(ordered_edges[0:stop,1], ordered_edges[0:stop,0], c=ra, cmap = 'viridis')
+        #plt.set(xlim = [0,1000], ylim = [0, 400])
         plt.show()
 
     print("My program took", (time.time() - start_time)/60, "min to run")
-    data = np.asarray([times, rg])
-    np.savetxt(directory + '/rg.csv', data)
-    plt.plot(times, rg)
+    data = np.asarray([times, curvatures, rg])
+    np.savetxt('/Users/carmenlee/Documents/Research/Granular_PRI/curvature_data/' + directory[-6:]+'curvaturerg.csv', data)
+    figure, [ax1,ax2] = plt.subplots(nrows = 2)
+    ax1.plot(times, curvatures, '.')
+
+    ax2.plot(times, rg, '.')
+    ax1.set(ylabel = 'curvature', xlabel = 'frame')
+    ax2.set(ylabel = 'Rg', xlabel = 'frame')
+    ax1.set_xlim([0, 400])
+    ax2.set_xlim([0, 400])
     plt.show()
 
 
-imagelist = ['/Volumes/My Passport/PRI bubbles clusters/19022021/300ms_fishingline_5%peg_1_5%sds_H20_air_p2_1_g_1/300ms_fishingline_5%peg_1_5%sds_H20_air_p2_1_g_1_MMStack.ome.tif','/Volumes/My Passport/PRI bubbles clusters/19022021/300ms_fishingline_5%peg_1_5%sds_H20_air_p2_2_g_1/300ms_fishingline_5%peg_1_5%sds_H20_air_p2_2_g_1_MMStack.ome.tif']
-startlist = [83,87]
-xminlist = [326, 110]
-xmaxlist = [1076,1078]
-yminlist = [418,374]
-ymaxlist = [640, 580]
+imagelist = [ '/Volumes/My Passport/PRI bubbles clusters/02032021/300ms_fishingline_5%peg_1_5%sds_H20_air_p1_2_1/300ms_fishingline_5%peg_1_5%sds_H20_air_p1_2_1_MMStack.ome.tif',\
+ '/Volumes/My Passport/PRI bubbles clusters/02032021/300ms_fishingline_5%peg_1_5%sds_H20_air_p1_2_4/300ms_fishingline_5%peg_1_5%sds_H20_air_p1_2_4_MMStack.ome.tif']
+startlist = [95,57]
+stoplist = [ None, None]
+xminlist = [30, 210]
+xmaxlist = [1228, 1162]
+yminlist = [230, 148]
+ymaxlist = [400,352]
 
 
 for j in range(len(imagelist)):
-    
+
     image_analysis_curvature(imagelist[j],
-                                 startlist[j], yminlist[j],
+                                 startlist[j],stoplist[j], yminlist[j],
                                  ymaxlist[j],
                                  xminlist[j],
                                  xmaxlist[j], plot=False)

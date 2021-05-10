@@ -18,7 +18,7 @@ from skimage.filters import unsharp_mask
 from skimage import filters, measure
 
 import pandas as pd
-import trackpy as tp
+
 
 import time
 start_time = time.time()
@@ -29,11 +29,11 @@ mpl.rc('image', cmap='gray')
 
 
 
-directory = '/Volumes/My Passport/PRI bubbles clusters/02032021/300ms_fishingline_5%peg_1_5%sds_H20_air_p1_2_4/'
+directory = '/Volumes/My Passport/PRI bubbles clusters/02032021/300ms_fishingline_5%peg_1_5%sds_H20_air_p1_1_1/'
 
-prefix = '300ms_fishingline_5%peg_1_5%sds_H20_air_p1_2_4_MMStack.ome.tif'
+prefix = '300ms_fishingline_5%peg_1_5%sds_H20_air_p1_1_1_MMStack.ome.tif'
 datafile = 'stack'
-start = 18
+start = 23
 import ImportImages as II
 if datafile == 'sequence':
     frames = II.ImportImg(directory, prefix, II.preprocess_sharpen)
@@ -57,12 +57,12 @@ import MatchTemplate
 #from MatchTemplate import PlotTemplate
 
 ## Use if counter does not work
-droplet_template = frames[start][74:84,262:272]
+droplet_template = II.crop(frames[start])[35:45,51:61]
 threshold = 0.65
 diameter =10
 N =39
 row =1
-img_example = frames[-1]
+img_example = II.crop(frames[start])
 plt.imshow(img_example)
 plt.show()
 
@@ -101,9 +101,9 @@ Rg = []
 times = []
 #for m in range(start,len(frames)-start):
 for m in range(start,300+start):
-    r, pek = labelimg(frames[m])
+    r, pek = labelimg(II.crop(frames[m]))
     if m == len(frames)-start-1:
-        MatchTemplate.PlotTemplate(frames[m], droplet_template, match, pek)
+        MatchTemplate.PlotTemplate(II.crop(frames[m]), droplet_template, match, pek)
     print(r)
     Rg.append(r)
     times.append(m)

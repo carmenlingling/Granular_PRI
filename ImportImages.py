@@ -17,8 +17,8 @@ import matplotlib  as mpl
 import matplotlib.pyplot as plt
 from scipy import ndimage
 import os
-from matplotlib_scalebar.scalebar import ScaleBar
-import cv2
+#from matplotlib_scalebar.scalebar import ScaleBar
+
 
 mpl.rc('figure',  figsize=(10, 6))
 mpl.rc('image', cmap='gray')
@@ -32,7 +32,8 @@ def ImportImg(directory, prefix, preprocess_func):
 
 
 def stack(directory, prefix, preprocess_func):
-    frames = pims.TiffStack(os.path.join(directory, prefix),process_func=preprocess_func)
+    frames = pims.TiffStack(os.path.join(directory, prefix))
+    
     #plt.imshow(frames[0])
     #plt.show()
     return frames
@@ -41,10 +42,10 @@ def crop(img):
     """
     Crop the image to select the region of interest
     """   
-    x_min = 164
-    x_max = 652
-    y_min = 218
-    y_max = 392
+    x_min = 474
+    x_max = 1024
+    y_min = 208
+    y_max = 328
     return img[y_min:y_max,x_min:x_max]
 
 def crop_bottom(img):    

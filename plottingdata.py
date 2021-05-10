@@ -28,12 +28,23 @@ for files in [f for f in os.listdir(directoryfeb19) if f.endswith('.csv')]:
     fileNamesfeb19.append(files)
 fileNamesfeb19.sort()
 
-directoryfeb19c1 = '/Volumes/My Passport/PRI bubbles clusters/19022021/1'
+directoryfeb19c1 = '/Users/carmenlee/Documents/Research/Granular_PRI/curvature_data/'
 fileNamesfeb19c1 = []
 for files in [f for f in os.listdir(directoryfeb19c1) if f.endswith('.csv')]:
     fileNamesfeb19c1.append(files)
 fileNamesfeb19c1.sort()
 
+figure, [ax1,ax2] = plt.subplots(nrows = 2)
+for f in fileNamesfeb19c1:
+    data = np.genfromtxt(directoryfeb19c1+f)
+    ax1.plot(data[0,:], data[1,:], '.')
+    ax2.plot(data[0,:], data[2,:], '.')
+
+ax1.set(ylabel = 'curvature', xlabel = 'frame')
+ax2.set(ylabel = 'Rg', xlabel = 'frame')
+#ax1.set_xlim([0, 400])
+#ax2.set_xlim([0, 400])
+plt.show()
 #######################################
 #List all of the image files
 directorymar2r1 = '/Volumes/My Passport/PRI bubbles clusters/02032021/1'
