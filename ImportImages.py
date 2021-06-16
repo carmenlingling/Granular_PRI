@@ -31,7 +31,7 @@ def ImportImg(directory, prefix, preprocess_func):
 
 
 
-def stack(directory, prefix, preprocess_func):
+def stack(directory, prefix):
     frames = pims.TiffStack(os.path.join(directory, prefix))
     
     #plt.imshow(frames[0])
